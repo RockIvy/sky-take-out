@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.page.PageMethod;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.*;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -210,7 +212,7 @@ public class OrderServiceImpl implements OrderService {
         // 分页条件查询
         Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
 
-        List<OrderVO> list = new ArrayList();
+        List<OrderVO> list = new ArrayList<>();
 
         // 查询出订单明细，并封装入OrderVO进行响应
         if (page != null && page.getTotal() > 0) {
@@ -279,8 +281,8 @@ public class OrderServiceImpl implements OrderService {
             weChatPayUtil.refund(
                     ordersDB.getNumber(), //商户订单号
                     ordersDB.getNumber(), //商户退款单号
-                    new BigDecimal(0.01),//退款金额，单位 元
-                    new BigDecimal(0.01));//原订单金额
+                    BigDecimal.valueOf(0.01),//退款金额，单位 元
+                    BigDecimal.valueOf(0.01));//原订单金额
 
             //支付状态修改为 退款
             orders.setPayStatus(Orders.REFUND);
@@ -347,7 +349,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
-        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        PageMethod.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
 
         Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
 
@@ -389,8 +391,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 将每一条订单菜品信息拼接为字符串（格式：宫保鸡丁*3；）
         List<String> orderDishList = orderDetailList.stream().map(x -> {
-            String orderDish = x.getName() + "*" + x.getNumber() + ";";
-            return orderDish;
+            return x.getName() + "*" + x.getNumber() + ";";
         }).collect(Collectors.toList());
 
         // 将该订单对应的所有菜品信息拼接在一起
@@ -428,13 +429,13 @@ public class OrderServiceImpl implements OrderService {
 
         //支付状态
         Integer payStatus = ordersDB.getPayStatus();
-        if (payStatus == Orders.PAID) {
+        if (Objects.equals(payStatus, Orders.PAID)) {
             //用户已支付，需要退款
             String refund = weChatPayUtil.refund(
                     ordersDB.getNumber(),
                     ordersDB.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01));
+                    BigDecimal.valueOf(0.01),
+                    BigDecimal.valueOf(0.01));
             log.info("申请退款：{}", refund);
         }
 
@@ -464,8 +465,8 @@ public class OrderServiceImpl implements OrderService {
             String refund = weChatPayUtil.refund(
                     ordersDB.getNumber(),
                     ordersDB.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01));
+                    BigDecimal.valueOf(0.01),
+                    BigDecimal.valueOf(0.01));
             log.info("申请退款：{}", refund);
         }
 
